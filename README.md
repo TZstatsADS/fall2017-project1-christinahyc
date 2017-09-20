@@ -15,6 +15,8 @@ Term: Fall 2017
 
 + WHAT I FOUND: I observed a very obvious trend that complexity of recent speeches is less than that of previous speeches. In other words, speeches become more simple. Is that because of the revolution of technology to spread infomation? Or presidents are targeting to more people including those who cannot get higher education? If given more time, maybe we can connect this find with more social science features.
 
+![image](figs/newplot.png)
+
 + Something just for fun: I tried to generate sentence that "sounds like" given by Trump. This LSTM text generation model is based on [keras](https://keras.rstudio.com/index.html). Running this script takes TONS of time, so please don't consider that into evaluation of "Reproducibility". After 80 epochs, it will provide some really interesting result. The training data is from [here](https://github.com/ryanmcdermott/trump-speeches/blob/master/speeches.txt) 
 
 + Please feel free to contact me through yuchen.huang@columbia.edu
