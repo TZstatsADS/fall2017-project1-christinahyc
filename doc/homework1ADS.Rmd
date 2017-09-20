@@ -1,0 +1,359 @@
+---
+title: "ADS_HW1"
+author: "Christina Huang"
+date: "2017/9/20"
+output: html_document
+---
+
+## This homework can be considered as two parts, first part(Step 0 to Step 5) is happened during the class. The reason I put the first part here is to give you a sense of what we already done and what am I going to do.
+
+## The second part (Measurement of Linguistic Complexity) is my part, which takes a new dataset into consideration. The aim of this part is to illustrate comparison of language complexity used by presidents. The interesting thing is, after generated the graph, I observed a very obvious trend that complexity of recent speeches is less than that of previous speeches. If given more time, maybe we can connect this find with more social science features.
+
+# Step 0: check and install needed packages. Load the libraries and functions. 
+
+```{r, message=FALSE, warning=FALSE}
+packages.used=c("rvest", "tibble", "qdap", 
+                "sentimentr", "gplots", "dplyr",
+                "tm", "syuzhet", "factoextra", 
+                "beeswarm", "scales", "RColorBrewer",
+                "RANN", "tm", "topicmodels", "quanteda")
+
+# check packages that need to be installed.
+packages.needed=setdiff(packages.used, 
+                        intersect(installed.packages()[,1], 
+                                  packages.used))
+# install additional packages
+if(length(packages.needed)>0){
+  install.packages(packages.needed, dependencies = TRUE)
+}
+
+# load packages
+library("rvest")
+library("tibble")
+library("qdap")
+library("sentimentr")
+library("gplots")
+library("dplyr")
+library("tm")
+library("syuzhet")
+library("factoextra")
+library("beeswarm")
+library("scales")
+library("RColorBrewer")
+library("RANN")
+library("tm")
+library("topicmodels")
+
+source("../lib/plotstacked.R")
+source("../lib/speechFuncs.R")
+```
+This notebook was prepared with the following environmental settings.
+
+```{r}
+print(R.version)
+```
+
+# Step 1: Data harvest: scrap speech URLs from <http://www.presidency.ucsb.edu/>.
+
+Following the example of [Jerid Francom](http://francojc.github.io/web-scraping-with-rvest/), we used [Selectorgadget](http://selectorgadget.com/) to choose the links we would like to scrap. For this project, we selected all inaugural addresses of past presidents, nomination speeches of major party candidates and farewell addresses. We also included several public speeches from Donald Trump for our textual analysis of presidential speeches. 
+
+```{r, message=FALSE, warning=FALSE}
+### Inauguaral speeches
+main.page <- read_html(x = "http://www.presidency.ucsb.edu/inaugurals.php")
+# Get link URLs
+# f.speechlinks is a function for extracting links from the list of speeches. 
+inaug=f.speechlinks(main.page)
+#head(inaug)
+as.Date(inaug[,1], format="%B %e, %Y")
+inaug=inaug[-nrow(inaug),] # remove the last line, irrelevant due to error.
+
+#### Nomination speeches
+main.page=read_html("http://www.presidency.ucsb.edu/nomination.php")
+# Get link URLs
+nomin <- f.speechlinks(main.page)
+#head(nomin)
+#
+#### Farewell speeches
+main.page=read_html("http://www.presidency.ucsb.edu/farewell_addresses.php")
+# Get link URLs
+farewell <- f.speechlinks(main.page)
+#head(farewell)
+```
+
+# Step 2: Using speech metadata posted on <http://www.presidency.ucsb.edu/>, we prepared CSV data sets for the speeches we will scrap. 
+
+```{r, message=FALSE, warning=FALSE}
+inaug.list=read.csv("../data/inauglist.csv", stringsAsFactors = FALSE)
+nomin.list=read.csv("../data/nominlist.csv", stringsAsFactors = FALSE)
+farewell.list=read.csv("../data/farewelllist.csv", stringsAsFactors = FALSE)
+```
+
+We assemble all scrapped speeches into one list. Note here that we don't have the full text yet, only the links to full text transcripts. 
+
+# Step 3: scrap the texts of speeches from the speech URLs.
+
+```{r, message=FALSE, warning=FALSE}
+nomin <- nomin[-47,]
+speech.list=rbind(inaug.list, nomin.list, farewell.list)
+speech.list$type=c(rep("inaug", nrow(inaug.list)),
+                   rep("nomin", nrow(nomin.list)),
+                   rep("farewell", nrow(farewell.list)))
+speech.url=rbind(inaug, nomin, farewell)
+speech.list=cbind(speech.list, speech.url)
+```
+
+Based on the list of speeches, we scrap the main text part of the transcript's html page. For simple html pages of this kind,  [Selectorgadget](http://selectorgadget.com/) is very convenient for identifying the html node that `rvest` can use to scrap its content. For reproducibility, we also save our scrapped speeches into our local folder as individual speech files. 
+
+```{r, message=FALSE, warning=FALSE}
+# Loop over each row in speech.list
+speech.list$fulltext=NA
+for(i in seq(nrow(speech.list))) {
+  text <- read_html(speech.list$urls[i]) %>% # load the page
+    html_nodes(".displaytext") %>% # isloate the text
+    html_text() # get the text
+  speech.list$fulltext[i]=text
+  # Create the file name
+  filename <- paste0("../data/fulltext/", 
+                     speech.list$type[i],
+                     speech.list$File[i], "-", 
+                     speech.list$Term[i], ".txt")
+  sink(file = filename) %>% # open file to write 
+  cat(text)  # write the file
+  sink() # close the file
+}
+```
+
+Trump, as president-elect that has not been a politician, do not have a lot of formal speeches yet. For our textual analysis, we manually add several public transcripts from Trump:
++ [Transcript: Donald Trump's full immigration speech, annotated. LA Times, 08/31/2016] (http://www.latimes.com/politics/la-na-pol-donald-trump-immigration-speech-transcript-20160831-snap-htmlstory.html)
++ [Transcript of Donald Trump’s speech on national security in Philadelphia
+- The Hill, 09/07/16](http://thehill.com/blogs/pundits-blog/campaign/294817-transcript-of-donald-trumps-speech-on-national-security-in)
++ [Transcript of President-elect Trump's news conference
+CNBC, 01/11/2017](http://www.cnbc.com/2017/01/11/transcript-of-president-elect-donald-j-trumps-news-conference.html)
+
+```{r, message=FALSE, warning=FALSE}
+speech1=paste(readLines("../data/fulltext/SpeechDonaldTrump-NA.txt", 
+                  n=-1, skipNul=TRUE),
+              collapse=" ")
+speech2=paste(readLines("../data/fulltext/SpeechDonaldTrump-NA2.txt", 
+                  n=-1, skipNul=TRUE),
+              collapse=" ")
+speech3=paste(readLines("../data/fulltext/PressDonaldTrump-NA.txt", 
+                  n=-1, skipNul=TRUE),
+              collapse=" ")
+
+Trump.speeches=data.frame(
+  President=rep("Donald J. Trump", 3),
+  File=rep("DonaldJTrump", 3),
+  Term=rep(0, 3),
+  Party=rep("Republican", 3),
+  Date=c("August 31, 2016", "September 7, 2016", "January 11, 2017"),
+  Words=c(word_count(speech1), word_count(speech2), word_count(speech3)),
+  Win=rep("yes", 3),
+  type=rep("speeches", 3),
+  links=rep(NA, 3),
+  urls=rep(NA, 3),
+  fulltext=c(speech1, speech2, speech3)
+)
+
+speech.list=rbind(speech.list, Trump.speeches)
+```
+
+# Step 4: data Processing --- generate list of sentences
+
+We will use sentences as units of analysis for this project, as sentences are natural languge units for organizing thoughts and ideas. For each extracted sentence, we apply sentiment analysis using [NRC sentiment lexion](http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm). "The NRC Emotion Lexicon is a list of English words and their associations with eight basic emotions (anger, fear, anticipation, trust, surprise, sadness, joy, and disgust) and two sentiments (negative and positive). The annotations were manually done by crowdsourcing."
+
+We assign an sequential id to each sentence in a speech (`sent.id`) and also calculated the number of words in each sentence as *sentence length* (`word.count`).
+
+```{r, message=FALSE, warning=FALSE}
+sentence.list=NULL
+for(i in 1:nrow(speech.list)){
+  sentences=sent_detect(speech.list$fulltext[i],
+                        endmarks = c("?", ".", "!", "|",";"))
+  if(length(sentences)>0){
+    emotions=get_nrc_sentiment(sentences)
+    word.count=word_count(sentences)
+    # colnames(emotions)=paste0("emo.", colnames(emotions))
+    # in case the word counts are zeros?
+    emotions=diag(1/(word.count+0.01))%*%as.matrix(emotions)
+    sentence.list=rbind(sentence.list, 
+                        cbind(speech.list[i,-ncol(speech.list)],
+                              sentences=as.character(sentences), 
+                              word.count,
+                              emotions,
+                              sent.id=1:length(sentences)
+                              )
+    )
+  }
+}
+```
+
+Some non-sentences exist in raw data due to erroneous extra end-of sentence marks. 
+```{r, message=FALSE, warning=FALSE}
+sentence.list=
+  sentence.list%>%
+  filter(!is.na(word.count)) 
+
+```
+
+# Step 5: Data analysis --- length of sentences
+
+For simpler visualization, we chose a subset of better known presidents or presidential candidates on which to focus our analysis. 
+
+```{r, message=FALSE, warning=FALSE}
+sel.comparison=c("DonaldJTrump","JohnMcCain", "GeorgeBush", "MittRomney", "GeorgeWBush",
+                 "RonaldReagan","AlbertGore,Jr", "HillaryClinton","JohnFKerry", 
+                 "WilliamJClinton","HarrySTruman", "BarackObama", "LyndonBJohnson",
+                 "GeraldRFord", "JimmyCarter", "DwightDEisenhower", "FranklinDRoosevelt",
+                 "HerbertHoover","JohnFKennedy","RichardNixon","WoodrowWilson", 
+                 "AbrahamLincoln", "TheodoreRoosevelt", "JamesGarfield", 
+                 "JohnQuincyAdams", "UlyssesSGrant", "ThomasJefferson",
+                 "GeorgeWashington", "WilliamHowardTaft", "AndrewJackson",
+                 "WilliamHenryHarrison", "JohnAdams")
+```
+
+## Overview of sentence length distribution by different types of speeches. 
+
+### Nomination speeches 
+
+First, we look at *nomination acceptance speeches* at major party's national conventions. For relevant to Trump's speeches, we limit our attention to speeches for the first terms of former U.S. presidents.  We noticed that a number of presidents have very short sentences in their nomination acceptance speeches. 
+
+#### First term
+
+```{r, message=FALSE, warning=FALSE}
+
+par(mar=c(4, 11, 2, 2))
+
+#sel.comparison=levels(sentence.list$FileOrdered)
+sentence.list.sel=filter(sentence.list, 
+                        type=="nomin", Term==1, File%in%sel.comparison)
+sentence.list.sel$File=factor(sentence.list.sel$File)
+
+sentence.list.sel$FileOrdered=reorder(sentence.list.sel$File, 
+                                  sentence.list.sel$word.count, 
+                                  mean, 
+                                  order=T)
+
+beeswarm(word.count~FileOrdered, 
+         data=sentence.list.sel,
+         horizontal = TRUE, 
+         pch=16, col=alpha(brewer.pal(9, "Set1"), 0.6), 
+         cex=0.55, cex.axis=0.8, cex.lab=0.8,
+         spacing=5/nlevels(sentence.list.sel$FileOrdered),
+         las=2, xlab="Number of words in a sentence.", ylab="",
+         main="Nomination speeches")
+
+```
+
+#### Second term
+
+
+```{r, message=FALSE, warning=FALSE}
+par(mar=c(4, 11, 2, 2))
+
+#sel.comparison=levels(sentence.list$FileOrdered)
+sentence.list.sel=filter(sentence.list, 
+                        type=="nomin", Term==2, File%in%sel.comparison)
+sentence.list.sel$File=factor(sentence.list.sel$File)
+
+sentence.list.sel$FileOrdered=reorder(sentence.list.sel$File, 
+                                  sentence.list.sel$word.count, 
+                                  mean, 
+                                  order=T)
+
+beeswarm(word.count~FileOrdered, 
+         data=sentence.list.sel,
+         horizontal = TRUE, 
+         pch=16, col=alpha(brewer.pal(9, "Set1"), 0.6), 
+         cex=0.55, cex.axis=0.8, cex.lab=0.8,
+         spacing=1.2/nlevels(sentence.list.sel$FileOrdered),
+         las=2, xlab="Number of words in a sentence.", ylab="",
+         main="Nomination speeches, 2nd term")
+
+```
+
+What are these short sentences?
+```{r, message=FALSE, warning=FALSE}
+sentence.list%>%
+  filter(File=="DonaldJTrump", 
+         type=="nomin", 
+         word.count<=3)%>%
+  select(sentences)%>%sample_n(10)
+
+sentence.list%>%
+  filter(File=="AlbertGore,Jr", 
+         type=="nomin", 
+         word.count<=3)%>%
+  select(sentences)%>%sample_n(10)
+
+sentence.list%>%
+  filter(File=="Clinton", 
+         type=="nomin", 
+         word.count<=3)%>%
+  select(sentences)
+
+sentence.list%>%
+  filter(File=="WilliamJClinton", 
+         type=="nomin", Term==1,
+         word.count<=3)%>%
+  select(sentences)
+```
+
+
+# Measurement of Linguistic Complexity
+
+As we already get the length of sentence for each president, I would like to measure the linguistic complexity for each president in a more scientific way, A.K.A I will use Fresch-Kincaid Reading Ease Score to measure the complexity.
+
+Things work like this:
+
+Let's set 2nd-4th sectences from Trump's and Obama's inaugation as an example. The higher score of Flesch.Kincaid they get, the more complex their words are.
+```{r, message=FALSE, warning=FALSE}
+trump_sample_text = "We, the citizens of America, are now joined in a great national effort to rebuild our country and to restore its promise for all of our people.Together, we will determine the course of America and the world for years to come.We will face challenges."
+obama_sample_text = "I thank President Bush for his service to our Nation, as well as the generosity and cooperation he has shown throughout this transition. Forty-four Americans have now taken the Presidential oath. The words have been spoken during rising tides of prosperity and the still waters of peace."
+
+require(quanteda)
+textstat_readability(c(trump_sample_text,obama_sample_text), 
+        measure=c('Flesch','Flesch.Kincaid',
+                  'meanSentenceLength','meanWordSyllables'))
+```
+
+
+Now we consider FRE for addresses from different presidents. I will ues the texts published in this site: http://stateoftheunion.onetwothree.net/texts/index.html
+```{r, message=FALSE, warning=FALSE}
+require(quanteda)
+require(dplyr)
+library(readr)
+
+#Create Corpus
+sotu <- Corpus(DirSource("../data/texts/"))
+
+sotu_corpus <- corpus(sotu)  # convert to quanteda corpus
+FRE_sotu <- textstat_readability(sotu_corpus,
+              measure=c('Flesch.Kincaid'))
+
+```
+
+FRE_sotu contains measurement of Flesch-Kincaid Grade for all txt files from the above link. What we do next is generating dataset and visualizing the Grade of different presidents as well as illustrating the trend of that index.
+
+```{r, message=FALSE, warning=FALSE}
+library(stringr)
+FREs <- data.frame(FRE_sotu)
+FREs$name <- str_sub(rownames(FREs), 5, -10)
+FREs$year <- str_sub(rownames(FREs), -8, -5)
+FREs$year <- as.Date(FREs$year, format = '%Y')
+colnames(FREs) <- c("FKScore", "name", "year")
+```
+
+Let's have a look at the comparison of linguistic Complexity for presidents. The graph is a interactive graph, by clicking the name of presidents, the dots can be hidden/showed up in the graph. Also can we see related complexity score of each dot(speech) by clicking the dot itself. 
+```{r, message=FALSE, warning=FALSE}
+library(ggthemes)
+library(plotly)
+p <- ggplot(data = FREs, aes(x = year, y = FKScore)) +
+  geom_point(alpha = 0.5, aes(col = name)) +
+  geom_smooth() +
+  guides(size = F) + theme_tufte() + 
+  xlab("") + ylab("Flesch-Kincaid Grade Level")
+
+ggplotly(p)
+```
+ 
+Interesting! Complexity of recent speeches is less than that of previous speeches. If given more time, maybe we can connect this find with more social science features!
