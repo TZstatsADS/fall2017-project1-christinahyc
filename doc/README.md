@@ -1,8 +1,8 @@
 # Project: 
 ### Doc folder
 
-homework1ADS.Rmd is for the project
+homework1ADS.Rmd is for the project, you can see the output [here](https://github.com/TZstatsADS/fall2017-project1-christinahyc/tree/master/output)
 
-ADShw1_forFUN.R is JUST for fun! It will take TONS of time to run it, but the result is really interesting. Make sure your computer has python installed. It also need some more python packages, make sure you have them all. (I already have most of them so didn't record what is required...) Feel free to contact me if you have any questions (yuchen.huang@columbia.edu)
+ADShw1_forFUN.R is JUST for fun! It will take TONS of time to run it, but the result is really interesting. Make sure your computer has python installed. It also need some more python packages, make sure you have them all. (I tried my best to write down scripts for installation of them, but since I already get parts of them installed, I may missed some packages... ) Feel free to contact me if you have any questions (yuchen.huang@columbia.edu)
 
 Thanks!
