@@ -1,5 +1,5 @@
 # Project: 
 ### Output folder
 
-The output directory contains analysis output, processed datasets, logs, or other processed things.
+As the name, it's a folder for all the output of my analysis about speeches' complexity.
 
