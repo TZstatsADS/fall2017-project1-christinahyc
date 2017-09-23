@@ -28,8 +28,11 @@ I tried to generate sentences that "sound like" given by Trump. This LSTM text g
 
 ![Intersting Result](figs/interesting_result.png)
 
-+ Please feel free to contact me through yuchen.huang@columbia.edu
+## Author
 
+Please feel free to contact me through yuchen.huang@columbia.edu
+
+## Project Directory
 Following [suggestions](http://nicercode.github.io/blog/2013-04-05-projects/) by [RICH FITZJOHN](http://nicercode.github.io/about/#Team) (@richfitz). This folder is orgarnized as follows.
 
 ```
