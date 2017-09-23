@@ -1,5 +1,5 @@
-# Fall 2017
-# Project 1: What did the presidents say at their inauguation?
+## Are speeches given by presidents become simpler? 
+(Following Thought of Fall 2017 Project 1: What did the presidents say at their inauguation?)
 
 ![image](figs/imTrump.png)
 
@@ -8,8 +8,8 @@ This is the first and only *individual* (as opposed to *team*) this semester.
 
 Term: Fall 2017
 
-+ Projec title: Are speeches given by presidents become more simple? 
-+ This project is conducted by Christina Huang
+
++ project conductor **Christina Huang**
 
 + Project summary: After analysis of speeches' sentence length in the class, I was wondering whether there is any more scientific index to measure the complexity of each speech. After going through [wiki](https://en.wikipedia.org/wiki/Flesch–Kincaid_readability_tests) I found out that we can use Fresch-Kincaid Reading Ease Score to make the comparison more translatable. Thus I downloading txt files of addresses from [this site](http://stateoftheunion.onetwothree.net/texts/index.html), since it contains more text than the dataset given in class. I used package [quanteda](https://cran.r-project.org/web/packages/quanteda/vignettes/quickstart.html) to calculate Fresch-Kincaid Reading Ease Score and visualized the result in a interactive graph.
 
