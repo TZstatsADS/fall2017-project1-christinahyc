@@ -1,4 +1,3 @@
-# Project: 
-### Figs folder
+# Figs folder
 
-The figs directory contains the figures. This directory only contains generated files; that is, one should always be able to delete the contents and regenerate them.
+A normal figs folder ~~seems like a safe place but never know when will a monster jump out~~.
