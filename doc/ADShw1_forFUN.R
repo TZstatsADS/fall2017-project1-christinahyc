@@ -19,26 +19,14 @@ maxlen <- 40
 
 # Data preparation --------------------------------------------------------
 
-#path <- get_file(
-#  'nietzsche.txt', 
-#  origin='https://s3.amazonaws.com/text-datasets/nietzsche.txt'
-#)
-
-#---- all Obama ----
-#txt_files = list.files(path = "/Users/laohuang/Desktop/ADS/ADSTEACHER/wk2-TextMining/data/fulltext", pattern = ".*Barack.*")
-#txt_files <- paste("/Users/laohuang/Desktop/ADS/ADSTEACHER/wk2-TextMining/data/fulltext/", txt_files,  sep = "")
-#data <- lapply(txt_files, read_lines)
-#data <- unlist(data)
-
-#---- Trump speeched ----
-data <- read_lines("speeches.txt")
-text <- #read_lines(path) %>%
-  data %>%
+#---- Trump speeches ----
+data <- read_lines("TrumpSpeeches.txt")
+text <- data %>%
   str_to_lower() %>%
   str_c(collapse = "\n") %>%
   tokenize_characters(strip_non_alphanum = FALSE, simplify = TRUE)
 
-print(sprintf("corpus length: %d", length(text))) # "corpus length: 600893"
+print(sprintf("corpus length: %d", length(text)))
 
 chars <- text %>%
   unique() %>%
@@ -59,13 +47,10 @@ X <- array(0, dim = c(length(dataset$sentece), maxlen, length(chars)))
 y <- array(0, dim = c(length(dataset$sentece), length(chars)))
 
 for(i in 1:length(dataset$sentece)){
-  
   X[i,,] <- sapply(chars, function(x){
     as.integer(x == dataset$sentece[[i]])
   })
-  
   y[i,] <- as.integer(chars == dataset$next_char[[i]])
-  
 }
 
 # Model definition --------------------------------------------------------
@@ -128,11 +113,11 @@ for(iteration in 1:80){
       
       generated <- str_c(generated, next_char, collapse = "")
       sentence <- c(sentence[-1], next_char)
-      
     }
-    
     cat(generated)
     cat("\n\n")
     
+    #---- save into ~/output/FunOut.txt
+    cat(generated,file="../output/FunOut.txt",sep="\n",append=TRUE)
   }
 }
