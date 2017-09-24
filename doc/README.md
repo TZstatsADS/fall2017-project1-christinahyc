@@ -1,4 +1,4 @@
-### Doc folder
+# Doc folder
 
 **homework1ADS.Rmd** is for the project, you can see the output [here](https://github.com/TZstatsADS/fall2017-project1-christinahyc/tree/master/output)
 
