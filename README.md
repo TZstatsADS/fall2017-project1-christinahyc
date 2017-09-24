@@ -1,7 +1,8 @@
 # Are speeches given by presidents become simpler? 
 ## plus: what may Trump say based on his previous addresses? (Fun Part)
 
-(Following Thought of Fall 2017 Project 1: What did the presidents say at their inauguation?)
+Following Thoughts of Fall 2017 Project 1: **_What did the presidents say at their inauguation?_** 
+~~No! it's not just an assignment!~~
 
 ![image](figs/imTrump.png)
 
