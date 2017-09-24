@@ -23,7 +23,7 @@ I observed a very obvious trend that complexity of recent speeches is less than 
 
 ![image](figs/newplot.png)
 
-## Something just for fun
+## Something just for fun -- guess what Trump will say?
 
 I tried to generate sentences that "sound like" given by Trump. This LSTM text generation model is based on [keras](https://keras.rstudio.com/index.html). Running this script takes TONS of time, so please don't consider that into evaluation of "Reproducibility". After 80 epochs, it will provide some really interesting result (somethins like "i want to be the world"). The training data is from [here](https://github.com/ryanmcdermott/trump-speeches/blob/master/speeches.txt) 
 
