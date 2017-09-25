@@ -20,7 +20,7 @@ maxlen <- 40
 # Data preparation --------------------------------------------------------
 
 #---- Trump speeches ----
-data <- read_lines("TrumpSpeeches.txt")
+data <- read_lines("../data/TrumpSpeeches.txt")
 text <- data %>%
   str_to_lower() %>%
   str_c(collapse = "\n") %>%
@@ -82,13 +82,13 @@ sample_mod <- function(preds, temperature = 1){
     which.max()
 }
 
-for(iteration in 1:80){
+for(iteration in 1:40){
   
   cat(sprintf("iteration: %02d ---------------\n\n", iteration))
   
   model %>% fit(
     X, y,
-    batch_size = 128,
+    batch_size = 256,
     epochs = 1
   )
   
@@ -118,6 +118,11 @@ for(iteration in 1:80){
     cat("\n\n")
     
     #---- save into ~/output/FunOut.txt
+    cat(sprintf("============================== iteration: %02d ==============================", iteration),
+        file="../output/FunOut.txt",sep="\n",append=TRUE)
+    cat(sprintf("diversity: %f ---------------", diversity),
+        file="../output/FunOut.txt",sep="\n",append=TRUE)
     cat(generated,file="../output/FunOut.txt",sep="\n",append=TRUE)
+    cat("\n\n\n")
   }
 }
